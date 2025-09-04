@@ -44,13 +44,12 @@ func NewSoundfile(img *image.Image, name string) Soundfile {
 }
 
 func appendWav(name string) string {
-	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|", " "}
+	name = strings.TrimSpace(name)
 
+	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|", " "}
 	for _, char := range invalidChars {
 		name = strings.ReplaceAll(name, char, "_")
 	}
-
-	name = strings.TrimSpace(name)
 
 	if strings.HasSuffix(name, ".") {
 		return name + "wav"
