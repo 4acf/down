@@ -11,44 +11,65 @@ import (
 	"github.com/go-audio/wav"
 )
 
-func Wav(img image.Image, outputDirectory string) error {
-	outputFilepath := filepath.Join(outputDirectory, "test.wav")
+type Soundfile struct {
+	img         *image.Image
+	name        string
+	format      *audio.Format
+	sampleRate  int
+	numChannels int
+	bitDepth    int
+}
 
-	out, err := os.Create(outputFilepath)
-	if err != nil {
-		return fmt.Errorf("error creating file %s: %w", outputFilepath, err)
-	}
-	defer out.Close()
+func NewSoundfile(img *image.Image, name string) Soundfile {
 
-	const (
-		sampleRate  = 44100
-		numChannels = 1
-		bitDepth    = 16
-	)
-
-	encoder := wav.NewEncoder(out, sampleRate, bitDepth, numChannels, 1)
-	defer encoder.Close()
+	sampleRate := 44100
+	numChannels := 1
+	bitDepth := 16
 
 	format := &audio.Format{
 		NumChannels: numChannels,
 		SampleRate:  sampleRate,
 	}
 
-	bounds := img.Bounds()
-	height := bounds.Dy()
+	return Soundfile{
+		img:         img,
+		name:        name,
+		format:      format,
+		sampleRate:  sampleRate,
+		numChannels: numChannels,
+		bitDepth:    bitDepth,
+	}
+
+}
+
+func (soundfile *Soundfile) Wav(outputDirectory string) error {
+	outputFilepath := filepath.Join(outputDirectory, soundfile.name)
+
+	out, err := os.Create(outputFilepath)
+	if err != nil {
+		return fmt.Errorf("error creating file %s: %w", soundfile.name, err)
+	}
+	defer out.Close()
+
+	encoder := wav.NewEncoder(out, soundfile.sampleRate, soundfile.bitDepth, soundfile.numChannels, 1)
+	defer encoder.Close()
+
+	bounds := (*soundfile.img).Bounds()
 
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
-		freqs := freqsFromColumn(img, x, bounds, height)
-		addSine(encoder, freqs, format)
+		freqs := soundfile.getColumnFrequencies(x)
+		soundfile.addSine(encoder, freqs)
 	}
 
 	return nil
 }
 
-func freqsFromColumn(img image.Image, x int, bounds image.Rectangle, height int) []float64 {
+func (soundfile *Soundfile) getColumnFrequencies(x int) []float64 {
+	bounds := (*soundfile.img).Bounds()
+	height := bounds.Dy()
 	freqs := make([]float64, 0, height*2)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		r, g, b, _ := img.At(x, y).RGBA()
+		r, g, b, _ := (*soundfile.img).At(x, y).RGBA()
 		r >>= 8
 		g >>= 8
 		b >>= 8
@@ -63,7 +84,7 @@ func freqsFromColumn(img image.Image, x int, bounds image.Rectangle, height int)
 	return freqs
 }
 
-func addSine(encoder *wav.Encoder, freqs []float64, format *audio.Format) {
+func (soundfile *Soundfile) addSine(encoder *wav.Encoder, freqs []float64) {
 	if len(freqs) == 0 {
 		return
 	}
@@ -73,8 +94,8 @@ func addSine(encoder *wav.Encoder, freqs []float64, format *audio.Format) {
 		duration   = 0.2
 	)
 
-	numSamples := int(duration * sampleRate)
-	maxAmplitude := math.Pow(2, 15)
+	numSamples := int(duration * float64(soundfile.sampleRate))
+	maxAmplitude := math.Pow(2, float64(soundfile.bitDepth)-1)
 
 	buffer := make([]float64, numSamples)
 
@@ -89,8 +110,8 @@ func addSine(encoder *wav.Encoder, freqs []float64, format *audio.Format) {
 	}
 
 	intBuf := &audio.IntBuffer{
-		Format:         format,
-		SourceBitDepth: 16,
+		Format:         soundfile.format,
+		SourceBitDepth: soundfile.bitDepth,
 		Data:           make([]int, numSamples),
 	}
 
