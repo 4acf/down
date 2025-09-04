@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	inputFilepath := flag.String("i", "", "input filepath")
+	inputFilepath := flag.String("i", "", "input filepath (can be file or directory)")
 	outputDirectory := flag.String("o", "./", "output directory")
 
 	/*
@@ -27,25 +27,30 @@ func main() {
 		fmt.Print("input filepath is required, please specify input filepath with the -i flag")
 		return
 	}
-	if _, err := os.Stat(*inputFilepath); errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("file %s does not exist", *inputFilepath)
+
+	info, err := os.Stat(*inputFilepath)
+	if errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("file or directory %s does not exist", *inputFilepath)
 		return
 	}
 
-	//get rgb image data
-	img, err := img.Read(*inputFilepath)
+	imgPaths, err := img.GetImgPaths(info.IsDir(), *inputFilepath)
 	if err != nil {
-		//for now we print the error and return, in the future when this block is in a loop this will break instead of return
 		fmt.Println(err)
 		return
 	}
 
-	//writeout to a wav file
-	soundfile := soundfile.NewSoundfile(&img, "test")
-	err = soundfile.Wav(*outputDirectory)
-	if err != nil {
-		fmt.Printf("wav file was not fully completed: %s", err)
-		return
+	for _, path := range imgPaths {
+		img, err := img.Read(path)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		soundfile := soundfile.NewSoundfile(&img, "test")
+		err = soundfile.Wav(*outputDirectory)
+		if err != nil {
+			fmt.Printf("wav file was not fully completed: %s", err)
+		}
 	}
 
 	//spectrogram
