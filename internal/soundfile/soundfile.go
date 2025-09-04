@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
@@ -21,7 +22,6 @@ type Soundfile struct {
 }
 
 func NewSoundfile(img *image.Image, name string) Soundfile {
-
 	sampleRate := 44100
 	numChannels := 1
 	bitDepth := 16
@@ -31,6 +31,8 @@ func NewSoundfile(img *image.Image, name string) Soundfile {
 		SampleRate:  sampleRate,
 	}
 
+	name = appendWav(name)
+
 	return Soundfile{
 		img:         img,
 		name:        name,
@@ -39,7 +41,23 @@ func NewSoundfile(img *image.Image, name string) Soundfile {
 		numChannels: numChannels,
 		bitDepth:    bitDepth,
 	}
+}
 
+func appendWav(name string) string {
+	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|", " "}
+
+	for _, char := range invalidChars {
+		name = strings.ReplaceAll(name, char, "_")
+	}
+
+	name = strings.TrimSpace(name)
+
+	if strings.HasSuffix(name, ".") {
+		return name + "wav"
+	} else if !strings.HasSuffix(strings.ToLower(name), ".wav") {
+		return name + ".wav"
+	}
+	return name
 }
 
 func (soundfile *Soundfile) Wav(outputDirectory string) error {

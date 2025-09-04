@@ -41,7 +41,7 @@ func main() {
 	}
 
 	//writeout to a wav file
-	soundfile := soundfile.NewSoundfile(&img, "test.wav")
+	soundfile := soundfile.NewSoundfile(&img, "test")
 	err = soundfile.Wav(*outputDirectory)
 	if err != nil {
 		fmt.Printf("wav file was not fully completed: %s", err)
