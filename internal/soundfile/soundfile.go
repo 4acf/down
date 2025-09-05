@@ -1,6 +1,7 @@
 package soundfile
 
 import (
+	"down/internal/utils"
 	"fmt"
 	"image"
 	"math"
@@ -10,6 +11,10 @@ import (
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
+)
+
+const (
+	WAV_EXTENSION = ".wav"
 )
 
 type Soundfile struct {
@@ -52,14 +57,14 @@ func appendWav(name string) string {
 	}
 
 	if strings.HasSuffix(name, ".") {
-		return name + "wav"
-	} else if !strings.HasSuffix(strings.ToLower(name), ".wav") {
-		return name + ".wav"
+		return name + WAV_EXTENSION
+	} else if !strings.HasSuffix(strings.ToLower(name), WAV_EXTENSION) {
+		return name + WAV_EXTENSION
 	}
 	return name
 }
 
-func (soundfile *Soundfile) Wav(outputDirectory string) error {
+func (soundfile *Soundfile) Wav(outputDirectory string, progressEnabled bool) error {
 	outputFilepath := filepath.Join(outputDirectory, soundfile.name)
 
 	out, err := os.Create(outputFilepath)
@@ -73,9 +78,18 @@ func (soundfile *Soundfile) Wav(outputDirectory string) error {
 
 	bounds := (*soundfile.img).Bounds()
 
-	for x := bounds.Min.X; x < bounds.Max.X; x++ {
+	progressBar := utils.NewProgressBar(
+		fmt.Sprintf("Writing to %s...", soundfile.name),
+		fmt.Sprintf("Writeout to %s complete.", soundfile.name),
+		bounds.Dx(),
+	)
+
+	for x := bounds.Min.X; x <= bounds.Max.X; x++ {
 		freqs := soundfile.getColumnFrequencies(x)
 		soundfile.addSine(encoder, freqs)
+		if progressEnabled {
+			progressBar.UpdateConsole(x - bounds.Min.X)
+		}
 	}
 
 	return nil

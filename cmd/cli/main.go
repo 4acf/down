@@ -13,10 +13,10 @@ func main() {
 
 	inputFilepath := flag.String("i", "", "input filepath (can be file or directory)")
 	outputDirectory := flag.String("o", "./", "output directory")
+	progressEnabled := flag.Bool("p", true, "display progress, set using -p=true|false")
 
 	/*
 		debug := flag.Bool("d", false, "debug mode")
-		progress := flag.Bool("p", true, "display progress")
 		audio := flag.Bool("a", true, "keep audio files")
 		image := flag.Bool("j", true, "keep image files")
 	*/
@@ -48,7 +48,7 @@ func main() {
 			continue
 		}
 		soundfile := soundfile.NewSoundfile(&img, imagefile.Name())
-		err = soundfile.Wav(*outputDirectory)
+		err = soundfile.Wav(*outputDirectory, *progressEnabled)
 		if err != nil {
 			fmt.Printf("wav file was not fully completed: %s", err)
 		}
