@@ -48,6 +48,10 @@ func NewSoundfile(img *image.Image, name string) Soundfile {
 	}
 }
 
+func (soundfile *Soundfile) Name() string {
+	return soundfile.name
+}
+
 func appendWav(name string) string {
 	name = strings.TrimSpace(name)
 

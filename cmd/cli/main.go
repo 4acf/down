@@ -50,7 +50,7 @@ func main() {
 		soundfile := soundfile.NewSoundfile(&img, imagefile.Name())
 		err = soundfile.Wav(*outputDirectory, *progressEnabled)
 		if err != nil {
-			fmt.Printf("wav file was not fully completed: %s", err)
+			fmt.Printf("\n%s writeout was not fully completed: %s", soundfile.Name(), err)
 		}
 	}
 

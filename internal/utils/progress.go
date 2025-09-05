@@ -2,12 +2,14 @@ package utils
 
 import (
 	"fmt"
+	"time"
 )
 
 type ProgressBar struct {
 	inProgressMessage string
 	completeMessage   string
 	iterations        int
+	startTime         time.Time
 }
 
 const (
@@ -19,6 +21,7 @@ func NewProgressBar(inProgressMessage string, completeMessage string, iterations
 		inProgressMessage: inProgressMessage,
 		completeMessage:   completeMessage,
 		iterations:        iterations,
+		startTime:         time.Now().UTC(),
 	}
 }
 
@@ -35,6 +38,8 @@ func (p *ProgressBar) UpdateConsole(finishedIteration int) {
 	var message string
 	if finishedIteration == p.iterations {
 		message = p.completeMessage
+		timeElapsed := time.Since(p.startTime)
+		layout = fmt.Sprintf("%s (%dm%.2fs)", layout, int(timeElapsed.Minutes()), timeElapsed.Seconds())
 	} else {
 		message = p.inProgressMessage
 	}
