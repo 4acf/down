@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -40,13 +41,13 @@ func main() {
 		return
 	}
 
-	for _, path := range imgPaths {
+	for index, path := range imgPaths {
 		img, err := img.Read(path)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		soundfile := soundfile.NewSoundfile(&img, "test")
+		soundfile := soundfile.NewSoundfile(&img, strconv.Itoa(index))
 		err = soundfile.Wav(*outputDirectory)
 		if err != nil {
 			fmt.Printf("wav file was not fully completed: %s", err)

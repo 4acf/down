@@ -1,20 +1,39 @@
 package img
 
 import (
-	"errors"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func GetImgPaths(isDir bool, path string) ([]string, error) {
 	var paths []string
 
+	isImageFile := func(p string) bool {
+		fileExtension := strings.ToLower(filepath.Ext(p))
+		return fileExtension == ".jpg" || fileExtension == ".png"
+	}
+
 	if isDir {
-		return nil, errors.New("not implemented yet")
+		err := filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() && isImageFile(p) {
+				paths = append(paths, p)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		paths = append(paths, path)
+		if isImageFile(path) {
+			paths = append(paths, path)
+		}
 	}
 
 	return paths, nil
