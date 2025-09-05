@@ -1,13 +1,12 @@
 package main
 
 import (
-	"down/internal/img"
+	"down/internal/imagefile"
 	"down/internal/soundfile"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 func main() {
@@ -35,19 +34,20 @@ func main() {
 		return
 	}
 
-	imgPaths, err := img.GetImgPaths(info.IsDir(), *inputFilepath)
+	//this function can return imagefiles with duplicate names, consider outputting files in directory tree(s) that matches the input
+	imagefiles, err := imagefile.GetImagefiles(info, *inputFilepath)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	for index, path := range imgPaths {
-		img, err := img.Read(path)
+	for _, imagefile := range imagefiles {
+		img, err := imagefile.Read()
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		soundfile := soundfile.NewSoundfile(&img, strconv.Itoa(index))
+		soundfile := soundfile.NewSoundfile(&img, imagefile.Name())
 		err = soundfile.Wav(*outputDirectory)
 		if err != nil {
 			fmt.Printf("wav file was not fully completed: %s", err)
