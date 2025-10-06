@@ -15,9 +15,9 @@ func main() {
 
 	inputFilepath := flag.String("i", "", "input filepath (can be file or directory)")
 	outputDirectory := flag.String("o", "./", "output directory")
-	progressEnabled := flag.Bool("p", true, "display progress, set using -p=true|false")
-	keepAudio := flag.Bool("a", true, "keep audio files, set using -a=true|false")
-	keepSpectrogram := flag.Bool("s", true, "keep spectrogram files, set using -s=true|false")
+	progressEnabled := flag.Bool("p", true, "display progress, set using -p=true|false, default true")
+	keepAudio := flag.Bool("a", true, "keep audio files, set using -a=true|false, default true")
+	keepSpectrogram := flag.Bool("s", true, "keep spectrogram files, set using -s=true|false, default true")
 
 	flag.Parse()
 
