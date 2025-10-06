@@ -2,9 +2,12 @@ package imagefile
 
 import (
 	"down/internal/utils"
+	"errors"
 	"image"
+	"image/color"
 	_ "image/jpeg"
-	_ "image/png"
+	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +16,7 @@ import (
 type Imagefile struct {
 	path string
 	name string
+	img  *image.Image
 }
 
 func (imagefile *Imagefile) Name() string {
@@ -35,6 +39,8 @@ func (imagefile *Imagefile) Read() (image.Image, error) {
 		return nil, err
 	}
 
+	imagefile.img = &img
+
 	return img, nil
 }
 
@@ -53,7 +59,7 @@ func GetImagefiles(info os.FileInfo, path string) ([]Imagefile, error) {
 			}
 			if !info.IsDir() && isImageFile(p) {
 				name := utils.RemoveExtension(info.Name())
-				imagefiles = append(imagefiles, Imagefile{path: p, name: name})
+				imagefiles = append(imagefiles, Imagefile{path: p, name: name, img: nil})
 			}
 			return nil
 		})
@@ -63,9 +69,74 @@ func GetImagefiles(info os.FileInfo, path string) ([]Imagefile, error) {
 	} else {
 		if isImageFile(path) {
 			name := utils.RemoveExtension(info.Name())
-			imagefiles = append(imagefiles, Imagefile{path: path, name: name})
+			imagefiles = append(imagefiles, Imagefile{path: path, name: name, img: nil})
 		}
 	}
 
 	return imagefiles, nil
+}
+
+func (imagefile *Imagefile) Write(data [][]complex128) error {
+
+	if imagefile.img == nil {
+		return errors.New("cannot access image as imagefile has not been read")
+	}
+
+	bounds := (*imagefile.img).Bounds()
+	xRes := bounds.Dx()
+	yRes := bounds.Dy()
+
+	newImage := image.NewNRGBA(
+		image.Rect(0, 0, xRes, yRes),
+	)
+
+	frames := len(data)
+	if frames == 0 {
+		return errors.New("spectrogram has insufficient frame information")
+	}
+
+	frequencyBins := len(data[0])
+	if frequencyBins == 0 {
+		return errors.New("spectrogram has insufficient frequency information")
+	}
+	frequencyBins /= 2
+
+	clamp := func(value float64, min float64, max float64) float64 {
+		ternary := func(condition bool, a float64, b float64) float64 {
+			if condition {
+				return a
+			}
+			return b
+		}
+		return ternary(value > max, max, ternary(min > value, min, value))
+	}
+
+	minDb := float64(-120)
+
+	for i := range xRes {
+		for j := range yRes {
+			frame := int((float64(i) / float64(xRes)) * float64(frames))
+			frequencyBin := int((float64(j) / float64(yRes)) * float64(frequencyBins))
+			abs := math.Abs(real(data[frame][frequencyBin]))
+			db := 20 * math.Log10(abs+1e-10)
+			db = clamp(db, minDb, 0)
+			normalizedDb := (db + (minDb * -1)) / (minDb * -1)
+			color := color.NRGBA{
+				R: 0xff, G: 0xff, B: 0xff, A: uint8(normalizedDb * 255),
+			}
+			newImage.SetNRGBA(i, yRes-j, color)
+		}
+	}
+
+	file, err := os.Create("spectrogram.png")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if err := png.Encode(file, newImage); err != nil {
+		return err
+	}
+
+	return nil
 }

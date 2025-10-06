@@ -18,7 +18,7 @@ func main() {
 	/*
 		debug := flag.Bool("d", false, "debug mode")
 		audio := flag.Bool("a", true, "keep audio files")
-		image := flag.Bool("j", true, "keep image files")
+		spectrogram := flag.Bool("s", true, "keep spectrogram files")
 	*/
 
 	flag.Parse()
@@ -52,8 +52,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("\n%s writeout was not fully completed: %s", soundfile.Name(), err)
 		}
+		imagefile.Write(soundfile.Spectrogram())
 	}
-
-	//spectrogram
 
 }

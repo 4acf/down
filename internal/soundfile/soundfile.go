@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
+	"github.com/r9y9/gossp/stft"
+	"github.com/r9y9/gossp/window"
 )
 
 const (
@@ -24,6 +26,7 @@ type Soundfile struct {
 	sampleRate  int
 	numChannels int
 	bitDepth    int
+	data        []float64
 }
 
 func NewSoundfile(img *image.Image, name string) Soundfile {
@@ -45,11 +48,16 @@ func NewSoundfile(img *image.Image, name string) Soundfile {
 		sampleRate:  sampleRate,
 		numChannels: numChannels,
 		bitDepth:    bitDepth,
+		data:        make([]float64, 0),
 	}
 }
 
 func (soundfile *Soundfile) Name() string {
 	return soundfile.name
+}
+
+func (soundfile *Soundfile) Data() []float64 {
+	return soundfile.data
 }
 
 func appendWav(name string) string {
@@ -156,5 +164,25 @@ func (soundfile *Soundfile) addSine(encoder *wav.Encoder, freqs []float64) {
 		intBuf.Data[i] = int(sample * maxAmplitude)
 	}
 
+	// todo: only run one of these blocks depending on if config is to keep audio files or not
+	// and determine if its really necessary to go from []float64 to []int and then back to []float64
 	_ = encoder.Write(intBuf)
+
+	normalizeValue := math.Pow(2, float64(soundfile.bitDepth)-1)
+	float64Array := make([]float64, len(intBuf.Data))
+	for i, value := range intBuf.Data {
+		float64Array[i] = float64(value) / normalizeValue
+	}
+	soundfile.data = append(soundfile.data, float64Array...)
+}
+
+func (soundfile *Soundfile) Spectrogram() [][]complex128 {
+	frameLength := 4096
+	stft := stft.STFT{
+		FrameShift: frameLength / 2,
+		FrameLen:   frameLength,
+		Window:     window.CreateHanning(frameLength),
+	}
+
+	return stft.STFT(soundfile.data)
 }
