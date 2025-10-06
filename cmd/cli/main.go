@@ -35,7 +35,8 @@ func main() {
 	}
 
 	//this function can return imagefiles with duplicate names, consider outputting files in directory tree(s) that matches the input
-	imagefiles, err := imagefile.GetImagefiles(info, *inputFilepath)
+	reader := imagefile.NewReader(&config)
+	imagefiles, err := reader.GetImagefiles(info, *inputFilepath)
 	if err != nil {
 		fmt.Println(err)
 		return
