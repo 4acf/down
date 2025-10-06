@@ -1,6 +1,7 @@
 package soundfile
 
 import (
+	"down/config"
 	"down/internal/utils"
 	"fmt"
 	"image"
@@ -18,6 +19,7 @@ const (
 )
 
 type Soundfile struct {
+	config      *config.Config
 	img         *image.Image
 	name        string
 	format      *audio.Format
@@ -27,7 +29,7 @@ type Soundfile struct {
 	data        []float64
 }
 
-func NewSoundfile(img *image.Image, name string) Soundfile {
+func NewSoundfile(config *config.Config, img *image.Image, name string) Soundfile {
 	sampleRate := 44100
 	numChannels := 1
 	bitDepth := 16
@@ -40,6 +42,7 @@ func NewSoundfile(img *image.Image, name string) Soundfile {
 	name = appendWav(name)
 
 	return Soundfile{
+		config:      config,
 		img:         img,
 		name:        name,
 		format:      format,
@@ -74,8 +77,8 @@ func appendWav(name string) string {
 	return name
 }
 
-func (soundfile *Soundfile) Wav(outputDirectory string, progressEnabled bool) error {
-	outputFilepath := filepath.Join(outputDirectory, soundfile.name)
+func (soundfile *Soundfile) Wav() error {
+	outputFilepath := filepath.Join(soundfile.config.OutputDirectory(), soundfile.name)
 
 	out, err := os.Create(outputFilepath)
 	if err != nil {
@@ -97,7 +100,7 @@ func (soundfile *Soundfile) Wav(outputDirectory string, progressEnabled bool) er
 	for x := bounds.Min.X; x <= bounds.Max.X; x++ {
 		freqs := soundfile.getColumnFrequencies(x)
 		soundfile.addSine(encoder, freqs)
-		if progressEnabled {
+		if soundfile.config.ProgressEnabled() {
 			progressBar.UpdateConsole(x - bounds.Min.X)
 		}
 	}

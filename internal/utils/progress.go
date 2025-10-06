@@ -39,7 +39,7 @@ func (p *ProgressBar) UpdateConsole(finishedIteration int) {
 	if finishedIteration == p.iterations {
 		message = p.completeMessage
 		timeElapsed := time.Since(p.startTime)
-		layout = fmt.Sprintf("%s (%dm%.2fs)", layout, int(timeElapsed.Minutes()), timeElapsed.Seconds())
+		layout = fmt.Sprintf("%s (%dm%.2fs)\n", layout, int(timeElapsed.Minutes()), timeElapsed.Seconds())
 	} else {
 		message = p.inProgressMessage
 	}

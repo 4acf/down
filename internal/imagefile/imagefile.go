@@ -90,8 +90,9 @@ func (imagefile *Imagefile) Write(data [][]float64) error {
 
 	for i := range xRes {
 		for j := range yRes {
+			channelValue := uint8(data[i][j] * 0xff)
 			color := color.NRGBA{
-				R: 0xff, G: 0xff, B: 0xff, A: uint8(data[i][j] * 0xff),
+				R: channelValue, G: channelValue, B: channelValue, A: 0xff,
 			}
 			newImage.SetNRGBA(i, yRes-j, color)
 		}

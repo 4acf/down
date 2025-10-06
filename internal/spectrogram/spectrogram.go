@@ -1,6 +1,7 @@
 package spectrogram
 
 import (
+	"down/config"
 	"down/internal/utils"
 	"errors"
 	"image"
@@ -11,22 +12,40 @@ import (
 )
 
 type Spectrogram struct {
-	stft stft.STFT
+	config *config.Config
+	stft   stft.STFT
 }
 
-func NewSpectrogram() Spectrogram {
+func NewSpectrogram(config *config.Config) Spectrogram {
 	frameLength := 2048
 	stft := stft.STFT{
 		FrameShift: frameLength / 8,
 		FrameLen:   frameLength,
 		Window:     window.CreateHanning(frameLength),
 	}
-	return Spectrogram{stft: stft}
+	return Spectrogram{
+		config: config,
+		stft:   stft,
+	}
 }
 
 func (spectrogram *Spectrogram) Image(samples []float64, bounds image.Rectangle) ([][]float64, error) {
 
+	spectrogramProgressBar := utils.NewProgressBar(
+		"Running short time fourier transform...",
+		"Short time fourier transform complete.",
+		1,
+	)
+
+	if spectrogram.config.ProgressEnabled() {
+		spectrogramProgressBar.UpdateConsole(0)
+	}
+
 	complexValues := spectrogram.stft.STFT(samples)
+
+	if spectrogram.config.ProgressEnabled() {
+		spectrogramProgressBar.UpdateConsole(1)
+	}
 
 	frames := len(complexValues)
 	if frames == 0 {
@@ -49,6 +68,12 @@ func (spectrogram *Spectrogram) Image(samples []float64, bounds image.Rectangle)
 		result[i] = make([]float64, yRes)
 	}
 
+	normalizationProgressBar := utils.NewProgressBar(
+		"Generating spectrogram...",
+		"Spectrogram generation complete.",
+		xRes,
+	)
+
 	for i := range xRes {
 		for j := range yRes {
 			frame := utils.ScaleInt(i, xRes, frames)
@@ -57,6 +82,9 @@ func (spectrogram *Spectrogram) Image(samples []float64, bounds image.Rectangle)
 			db := 20 * math.Log10(abs+1e-10)
 			db = utils.Clamp(db, minDb, 0)
 			result[i][j] = (db + (minDb * -1)) / (minDb * -1)
+		}
+		if spectrogram.config.ProgressEnabled() {
+			normalizationProgressBar.UpdateConsole(i - bounds.Min.X + 1)
 		}
 	}
 

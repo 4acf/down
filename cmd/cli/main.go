@@ -1,6 +1,7 @@
 package main
 
 import (
+	"down/config"
 	"down/internal/imagefile"
 	"down/internal/soundfile"
 	"down/internal/spectrogram"
@@ -15,12 +16,8 @@ func main() {
 	inputFilepath := flag.String("i", "", "input filepath (can be file or directory)")
 	outputDirectory := flag.String("o", "./", "output directory")
 	progressEnabled := flag.Bool("p", true, "display progress, set using -p=true|false")
-
-	/*
-		debug := flag.Bool("d", false, "debug mode")
-		audio := flag.Bool("a", true, "keep audio files")
-		spectrogram := flag.Bool("s", true, "keep spectrogram files")
-	*/
+	keepAudio := flag.Bool("a", true, "keep audio files")
+	keepSpectrogram := flag.Bool("s", true, "keep spectrogram files")
 
 	flag.Parse()
 
@@ -28,6 +25,8 @@ func main() {
 		fmt.Print("input filepath is required, please specify input filepath with the -i flag")
 		return
 	}
+
+	config := config.NewConfig(*outputDirectory, *progressEnabled, *keepAudio, *keepSpectrogram)
 
 	info, err := os.Stat(*inputFilepath)
 	if errors.Is(err, os.ErrNotExist) {
@@ -49,13 +48,13 @@ func main() {
 			continue
 		}
 
-		soundfile := soundfile.NewSoundfile(&img, imagefile.Name())
-		err = soundfile.Wav(*outputDirectory, *progressEnabled)
+		soundfile := soundfile.NewSoundfile(&config, &img, imagefile.Name())
+		err = soundfile.Wav()
 		if err != nil {
 			fmt.Printf("\n%s writeout was not fully completed: %s", soundfile.Name(), err)
 		}
 
-		spectrogram := spectrogram.NewSpectrogram()
+		spectrogram := spectrogram.NewSpectrogram(&config)
 		colorlessImage, err := spectrogram.Image(soundfile.Data(), img.Bounds())
 		if err != nil {
 			fmt.Println(err)
