@@ -7,7 +7,6 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	"image/png"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,7 +15,6 @@ import (
 type Imagefile struct {
 	path string
 	name string
-	img  *image.Image
 }
 
 func (imagefile *Imagefile) Name() string {
@@ -39,8 +37,6 @@ func (imagefile *Imagefile) Read() (image.Image, error) {
 		return nil, err
 	}
 
-	imagefile.img = &img
-
 	return img, nil
 }
 
@@ -59,7 +55,7 @@ func GetImagefiles(info os.FileInfo, path string) ([]Imagefile, error) {
 			}
 			if !info.IsDir() && isImageFile(p) {
 				name := utils.RemoveExtension(info.Name())
-				imagefiles = append(imagefiles, Imagefile{path: p, name: name, img: nil})
+				imagefiles = append(imagefiles, Imagefile{path: p, name: name})
 			}
 			return nil
 		})
@@ -69,64 +65,33 @@ func GetImagefiles(info os.FileInfo, path string) ([]Imagefile, error) {
 	} else {
 		if isImageFile(path) {
 			name := utils.RemoveExtension(info.Name())
-			imagefiles = append(imagefiles, Imagefile{path: path, name: name, img: nil})
+			imagefiles = append(imagefiles, Imagefile{path: path, name: name})
 		}
 	}
 
 	return imagefiles, nil
 }
 
-func (imagefile *Imagefile) Write(data [][]complex128) error {
+func (imagefile *Imagefile) Write(data [][]float64) error {
 
-	if imagefile.img == nil {
-		return errors.New("cannot access image as imagefile has not been read")
+	xRes := len(data)
+	if xRes == 0 {
+		return errors.New("cannot color an image that has no x resolution information")
 	}
 
-	bounds := (*imagefile.img).Bounds()
-	xRes := bounds.Dx()
-	yRes := bounds.Dy()
+	yRes := len(data[0])
+	if yRes == 0 {
+		return errors.New("cannot color an image that has no y resolution information")
+	}
 
 	newImage := image.NewNRGBA(
 		image.Rect(0, 0, xRes, yRes),
 	)
 
-	frames := len(data)
-	if frames == 0 {
-		return errors.New("spectrogram has insufficient frame information")
-	}
-
-	frequencyBins := len(data[0])
-	if frequencyBins == 0 {
-		return errors.New("spectrogram has insufficient frequency information")
-	}
-	frequencyBins /= 2
-
-	clamp := func(value, min, max float64) float64 {
-		ternary := func(condition bool, a, b float64) float64 {
-			if condition {
-				return a
-			}
-			return b
-		}
-		return ternary(value > max, max, ternary(min > value, min, value))
-	}
-
-	scaleInt := func(value, maxIn, maxOut int) int {
-		return int(float64(value) / float64(maxIn) * float64(maxOut))
-	}
-
-	minDb := float64(-120)
-
 	for i := range xRes {
 		for j := range yRes {
-			frame := scaleInt(i, xRes, frames)
-			frequencyBin := scaleInt(j, yRes, frequencyBins)
-			abs := math.Abs(real(data[frame][frequencyBin]))
-			db := 20 * math.Log10(abs+1e-10)
-			db = clamp(db, minDb, 0)
-			normalizedDb := (db + (minDb * -1)) / (minDb * -1)
 			color := color.NRGBA{
-				R: 0xff, G: 0xff, B: 0xff, A: uint8(normalizedDb * 255),
+				R: 0xff, G: 0xff, B: 0xff, A: uint8(data[i][j] * 255),
 			}
 			newImage.SetNRGBA(i, yRes-j, color)
 		}

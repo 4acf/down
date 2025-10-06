@@ -3,6 +3,7 @@ package main
 import (
 	"down/internal/imagefile"
 	"down/internal/soundfile"
+	"down/internal/spectrogram"
 	"errors"
 	"flag"
 	"fmt"
@@ -47,12 +48,21 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
+
 		soundfile := soundfile.NewSoundfile(&img, imagefile.Name())
 		err = soundfile.Wav(*outputDirectory, *progressEnabled)
 		if err != nil {
 			fmt.Printf("\n%s writeout was not fully completed: %s", soundfile.Name(), err)
 		}
-		err = imagefile.Write(soundfile.Spectrogram())
+
+		spectrogram := spectrogram.NewSpectrogram()
+		colorlessImage, err := spectrogram.Image(soundfile.Data(), img.Bounds())
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		err = imagefile.Write(colorlessImage)
 		if err != nil {
 			fmt.Println(err)
 			continue

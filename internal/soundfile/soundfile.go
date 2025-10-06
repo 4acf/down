@@ -11,8 +11,6 @@ import (
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
-	"github.com/r9y9/gossp/stft"
-	"github.com/r9y9/gossp/window"
 )
 
 const (
@@ -174,15 +172,4 @@ func (soundfile *Soundfile) addSine(encoder *wav.Encoder, freqs []float64) {
 		float64Array[i] = float64(value) / normalizeValue
 	}
 	soundfile.data = append(soundfile.data, float64Array...)
-}
-
-func (soundfile *Soundfile) Spectrogram() [][]complex128 {
-	frameLength := 2048
-	stft := stft.STFT{
-		FrameShift: frameLength / 8,
-		FrameLen:   frameLength,
-		Window:     window.CreateHanning(frameLength),
-	}
-
-	return stft.STFT(soundfile.data)
 }
