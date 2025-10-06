@@ -177,7 +177,7 @@ func (soundfile *Soundfile) addSine(encoder *wav.Encoder, freqs []float64) {
 }
 
 func (soundfile *Soundfile) Spectrogram() [][]complex128 {
-	frameLength := 4096
+	frameLength := 2048
 	stft := stft.STFT{
 		FrameShift: frameLength / 2,
 		FrameLen:   frameLength,
