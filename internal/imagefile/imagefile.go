@@ -101,8 +101,8 @@ func (imagefile *Imagefile) Write(data [][]complex128) error {
 	}
 	frequencyBins /= 2
 
-	clamp := func(value float64, min float64, max float64) float64 {
-		ternary := func(condition bool, a float64, b float64) float64 {
+	clamp := func(value, min, max float64) float64 {
+		ternary := func(condition bool, a, b float64) float64 {
 			if condition {
 				return a
 			}
@@ -111,12 +111,16 @@ func (imagefile *Imagefile) Write(data [][]complex128) error {
 		return ternary(value > max, max, ternary(min > value, min, value))
 	}
 
+	scaleInt := func(value, maxIn, maxOut int) int {
+		return int(float64(value) / float64(maxIn) * float64(maxOut))
+	}
+
 	minDb := float64(-120)
 
 	for i := range xRes {
 		for j := range yRes {
-			frame := int((float64(i) / float64(xRes)) * float64(frames))
-			frequencyBin := int((float64(j) / float64(yRes)) * float64(frequencyBins))
+			frame := scaleInt(i, xRes, frames)
+			frequencyBin := scaleInt(j, yRes, frequencyBins)
 			abs := math.Abs(real(data[frame][frequencyBin]))
 			db := 20 * math.Log10(abs+1e-10)
 			db = clamp(db, minDb, 0)
