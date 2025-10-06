@@ -52,7 +52,11 @@ func main() {
 		if err != nil {
 			fmt.Printf("\n%s writeout was not fully completed: %s", soundfile.Name(), err)
 		}
-		imagefile.Write(soundfile.Spectrogram())
+		err = imagefile.Write(soundfile.Spectrogram())
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 	}
 
 }
