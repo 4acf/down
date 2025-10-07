@@ -2,29 +2,30 @@ package soundfile
 
 import (
 	"down/config"
+	"down/internal/filesystem"
+	"down/internal/imagefile"
 	"down/internal/utils"
 	"fmt"
 	"image"
 	"math"
 	"os"
-	"path/filepath"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 )
 
 type Soundfile struct {
-	config      *config.Config
-	img         *image.Image
-	name        string
-	format      *audio.Format
-	sampleRate  int
-	numChannels int
-	bitDepth    int
-	data        []float64
+	config        *config.Config
+	imageContents *image.Image
+	imagefile     *imagefile.Imagefile
+	format        *audio.Format
+	sampleRate    int
+	numChannels   int
+	bitDepth      int
+	data          []float64
 }
 
-func NewSoundfile(config *config.Config, img *image.Image, name string) Soundfile {
+func NewSoundfile(config *config.Config, imageContents *image.Image, imagefile *imagefile.Imagefile) Soundfile {
 	sampleRate := 44100
 	numChannels := 1
 	bitDepth := 16
@@ -34,22 +35,18 @@ func NewSoundfile(config *config.Config, img *image.Image, name string) Soundfil
 		SampleRate:  sampleRate,
 	}
 
-	name = utils.AppendWav(name)
+	//name := utils.AppendWav(imagefile.Name())
 
 	return Soundfile{
-		config:      config,
-		img:         img,
-		name:        name,
-		format:      format,
-		sampleRate:  sampleRate,
-		numChannels: numChannels,
-		bitDepth:    bitDepth,
-		data:        make([]float64, 0),
+		config:        config,
+		imageContents: imageContents,
+		imagefile:     imagefile,
+		format:        format,
+		sampleRate:    sampleRate,
+		numChannels:   numChannels,
+		bitDepth:      bitDepth,
+		data:          make([]float64, 0),
 	}
-}
-
-func (soundfile *Soundfile) Name() string {
-	return soundfile.name
 }
 
 func (soundfile *Soundfile) Data() []float64 {
@@ -57,7 +54,12 @@ func (soundfile *Soundfile) Data() []float64 {
 }
 
 func (soundfile *Soundfile) Wav() error {
-	outputFilepath := filepath.Join(soundfile.config.AudioOutputDirectory(), soundfile.name)
+
+	filename := utils.AppendWav(soundfile.imagefile.Name())
+	outputFilepath, err := filesystem.CreateFinalPath(soundfile.config.AudioOutputDirectory(), soundfile.imagefile.Path(), filename)
+	if err != nil {
+		return err
+	}
 
 	out, err := os.Create(outputFilepath)
 	if err != nil {
@@ -68,11 +70,11 @@ func (soundfile *Soundfile) Wav() error {
 	encoder := wav.NewEncoder(out, soundfile.sampleRate, soundfile.bitDepth, soundfile.numChannels, 1)
 	defer encoder.Close()
 
-	bounds := (*soundfile.img).Bounds()
+	bounds := (*soundfile.imageContents).Bounds()
 
 	progressBar := utils.NewProgressBar(
-		fmt.Sprintf("Writing to %s...", soundfile.name),
-		fmt.Sprintf("Writeout to %s complete.", soundfile.name),
+		fmt.Sprintf("Writing to %s...", filename),
+		fmt.Sprintf("Writeout to %s complete.", filename),
 		bounds.Dx(),
 	)
 
@@ -88,11 +90,11 @@ func (soundfile *Soundfile) Wav() error {
 }
 
 func (soundfile *Soundfile) getColumnFrequencies(x int) []float64 {
-	bounds := (*soundfile.img).Bounds()
+	bounds := (*soundfile.imageContents).Bounds()
 	height := bounds.Dy()
 	freqs := make([]float64, 0, height*2)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		r, g, b, _ := (*soundfile.img).At(x, y).RGBA()
+		r, g, b, _ := (*soundfile.imageContents).At(x, y).RGBA()
 		r >>= 8
 		g >>= 8
 		b >>= 8

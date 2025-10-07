@@ -41,19 +41,19 @@ func main() {
 
 	_, err = os.Stat(*outputDirectory)
 	if errors.Is(err, os.ErrNotExist) {
-		err = os.Mkdir(*outputDirectory, 0755)
+		err = os.MkdirAll(*outputDirectory, 0755)
 		if err != nil {
 			fmt.Printf("[failed to create output directory] %s", err)
 			return
 		}
 
-		err = os.Mkdir(audioOutputDirectory, 0755)
+		err = os.MkdirAll(audioOutputDirectory, 0755)
 		if err != nil {
 			fmt.Printf("[failed to create output audio directory] %s", err)
 			return
 		}
 
-		err = os.Mkdir(spectrogramOutputDirectory, 0755)
+		err = os.MkdirAll(spectrogramOutputDirectory, 0755)
 		if err != nil {
 			fmt.Printf("[failed to create output audio directory] %s", err)
 			return
@@ -71,29 +71,32 @@ func main() {
 	}
 
 	for _, imagefile := range imagefiles {
-		img, err := imagefile.Read()
+
+		extensionlessName := imagefile.Name()
+
+		imageContents, err := imagefile.Read()
 		if err != nil {
-			fmt.Printf("\n[%s read failed] %s", imagefile.Name(), err)
+			fmt.Printf("\n[%s read failed] %s", extensionlessName, err)
 			continue
 		}
 
-		soundfile := soundfile.NewSoundfile(&config, &img, imagefile.Name())
+		soundfile := soundfile.NewSoundfile(&config, &imageContents, &imagefile)
 		err = soundfile.Wav()
 		if err != nil {
-			fmt.Printf("\n[%s audio writeout failed] %s", soundfile.Name(), err)
+			fmt.Printf("\n[%s wav writeout failed] %s", extensionlessName, err)
 			continue
 		}
 
 		spectrogram := spectrogram.NewSpectrogram(&config)
-		colorlessImage, err := spectrogram.Image(soundfile.Data(), img.Bounds())
+		colorlessImage, err := spectrogram.Image(soundfile.Data(), imageContents.Bounds())
 		if err != nil {
-			fmt.Printf("\n[%s spectrogram calculation failed] %s", soundfile.Name(), err)
+			fmt.Printf("\n[%s spectrogram calculation failed] %s", extensionlessName, err)
 			continue
 		}
 
 		err = imagefile.Write(colorlessImage)
 		if err != nil {
-			fmt.Printf("\n[%s image writeout failed] %s", imagefile.Name(), err)
+			fmt.Printf("\n[%s image writeout failed] %s", extensionlessName, err)
 			continue
 		}
 	}

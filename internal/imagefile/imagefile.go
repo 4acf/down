@@ -2,6 +2,7 @@ package imagefile
 
 import (
 	"down/config"
+	"down/internal/filesystem"
 	"down/internal/utils"
 	"errors"
 	"image"
@@ -9,7 +10,6 @@ import (
 	_ "image/jpeg"
 	"image/png"
 	"os"
-	"path/filepath"
 )
 
 type Imagefile struct {
@@ -67,7 +67,11 @@ func (imagefile *Imagefile) Write(data [][]float64) error {
 		}
 	}
 
-	outputFilepath := filepath.Join(imagefile.config.SpectrogramOutputDirectory(), utils.AppendPng(imagefile.name))
+	filename := utils.AppendPng(imagefile.name)
+	outputFilepath, err := filesystem.CreateFinalPath(imagefile.config.SpectrogramOutputDirectory(), imagefile.path, filename)
+	if err != nil {
+		return err
+	}
 
 	file, err := os.Create(outputFilepath)
 	if err != nil {
