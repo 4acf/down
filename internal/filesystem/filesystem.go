@@ -1,10 +1,36 @@
 package filesystem
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+const (
+	FILE_PERMISSIONS = 0755
+)
+
+func InitializeOutputDirectories(outputDirectory, audioOutputDirectory, spectrogramOutputDirectory string) error {
+	_, err := os.Stat(outputDirectory)
+	if errors.Is(err, os.ErrNotExist) {
+		err = os.MkdirAll(outputDirectory, FILE_PERMISSIONS)
+		if err != nil {
+			return err
+		}
+
+		err = os.MkdirAll(audioOutputDirectory, FILE_PERMISSIONS)
+		if err != nil {
+			return err
+		}
+
+		err = os.MkdirAll(spectrogramOutputDirectory, FILE_PERMISSIONS)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func CreateFinalPath(parent, internal, filename string) (string, error) {
 	paths := sanitizePaths(internal)
@@ -42,7 +68,7 @@ func createPaths(parent string, paths []string) error {
 	current := parent
 	for _, path := range paths {
 		current := filepath.Join(current, path)
-		err := os.MkdirAll(current, 0755)
+		err := os.MkdirAll(current, FILE_PERMISSIONS)
 		if err != nil {
 			return err
 		}

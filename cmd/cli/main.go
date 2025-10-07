@@ -2,6 +2,7 @@ package main
 
 import (
 	"down/config"
+	"down/internal/filesystem"
 	"down/internal/imagefile"
 	"down/internal/soundfile"
 	"down/internal/spectrogram"
@@ -39,30 +40,14 @@ func main() {
 	audioOutputDirectory := filepath.Join(*outputDirectory, AUDIO_OUTPUT_DIR)
 	spectrogramOutputDirectory := filepath.Join(*outputDirectory, SPECTROGRAM_OUTPUT_DIR)
 
-	_, err = os.Stat(*outputDirectory)
-	if errors.Is(err, os.ErrNotExist) {
-		err = os.MkdirAll(*outputDirectory, 0755)
-		if err != nil {
-			fmt.Printf("[failed to create output directory] %s", err)
-			return
-		}
-
-		err = os.MkdirAll(audioOutputDirectory, 0755)
-		if err != nil {
-			fmt.Printf("[failed to create output audio directory] %s", err)
-			return
-		}
-
-		err = os.MkdirAll(spectrogramOutputDirectory, 0755)
-		if err != nil {
-			fmt.Printf("[failed to create output audio directory] %s", err)
-			return
-		}
+	err = filesystem.InitializeOutputDirectories(*outputDirectory, audioOutputDirectory, spectrogramOutputDirectory)
+	if err != nil {
+		fmt.Printf("[could not initialize output directories] %s", err)
+		return
 	}
 
 	config := config.NewConfig(audioOutputDirectory, spectrogramOutputDirectory, *progressEnabled)
 
-	//this function can return imagefiles with duplicate names, consider outputting files in directory tree(s) that matches the input
 	reader := imagefile.NewReader(&config)
 	imagefiles, err := reader.GetImagefiles(inputInfo, *inputFilepath)
 	if err != nil {
