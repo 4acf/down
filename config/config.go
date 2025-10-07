@@ -1,33 +1,27 @@
 package config
 
 type Config struct {
-	outputDirectory string
-	progressEnabled bool
-	keepAudio       bool
-	keepSpectrogram bool
+	audioOutputDirectory       string
+	spectrogramOutputDirectory string
+	progressEnabled            bool
 }
 
-func NewConfig(outputDirectory string, progressEnabled bool, keepAudio bool, keepSpectrogram bool) Config {
+func NewConfig(audioOutputDirectory string, spectrogramOutputDirectory string, progressEnabled bool) Config {
 	return Config{
-		outputDirectory: outputDirectory,
-		progressEnabled: progressEnabled,
-		keepAudio:       keepAudio,
-		keepSpectrogram: keepSpectrogram,
+		audioOutputDirectory:       audioOutputDirectory,
+		spectrogramOutputDirectory: spectrogramOutputDirectory,
+		progressEnabled:            progressEnabled,
 	}
 }
 
-func (config *Config) OutputDirectory() string {
-	return config.outputDirectory
+func (config *Config) AudioOutputDirectory() string {
+	return config.audioOutputDirectory
+}
+
+func (config *Config) SpectrogramOutputDirectory() string {
+	return config.spectrogramOutputDirectory
 }
 
 func (config *Config) ProgressEnabled() bool {
 	return config.progressEnabled
-}
-
-func (config *Config) KeepAudio() bool {
-	return config.keepAudio
-}
-
-func (config *Config) KeepSpectrogram() bool {
-	return config.keepSpectrogram
 }

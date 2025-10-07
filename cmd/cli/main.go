@@ -9,15 +9,19 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+)
+
+const (
+	AUDIO_OUTPUT_DIR       = "audio"
+	SPECTROGRAM_OUTPUT_DIR = "spectrogram"
 )
 
 func main() {
 
 	inputFilepath := flag.String("i", "", "input filepath (can be file or directory)")
-	outputDirectory := flag.String("o", "./", "output directory")
+	outputDirectory := flag.String("o", "./output", "output directory")
 	progressEnabled := flag.Bool("p", true, "display progress, set using -p=true|false, default true")
-	keepAudio := flag.Bool("a", true, "keep audio files, set using -a=true|false, default true")
-	keepSpectrogram := flag.Bool("s", true, "keep spectrogram files, set using -s=true|false, default true")
 
 	flag.Parse()
 
@@ -26,17 +30,41 @@ func main() {
 		return
 	}
 
-	config := config.NewConfig(*outputDirectory, *progressEnabled, *keepAudio, *keepSpectrogram)
-
-	info, err := os.Stat(*inputFilepath)
+	inputInfo, err := os.Stat(*inputFilepath)
 	if errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("file or directory %s does not exist", *inputFilepath)
 		return
 	}
 
+	audioOutputDirectory := filepath.Join(*outputDirectory, AUDIO_OUTPUT_DIR)
+	spectrogramOutputDirectory := filepath.Join(*outputDirectory, SPECTROGRAM_OUTPUT_DIR)
+
+	_, err = os.Stat(*outputDirectory)
+	if errors.Is(err, os.ErrNotExist) {
+		err = os.Mkdir(*outputDirectory, 0755)
+		if err != nil {
+			fmt.Printf("failed to create output directory: %s", err)
+			return
+		}
+
+		err = os.Mkdir(audioOutputDirectory, 0755)
+		if err != nil {
+			fmt.Printf("failed to create output audio directory: %s", err)
+			return
+		}
+
+		err = os.Mkdir(spectrogramOutputDirectory, 0755)
+		if err != nil {
+			fmt.Printf("failed to create output audio directory: %s", err)
+			return
+		}
+	}
+
+	config := config.NewConfig(audioOutputDirectory, spectrogramOutputDirectory, *progressEnabled)
+
 	//this function can return imagefiles with duplicate names, consider outputting files in directory tree(s) that matches the input
 	reader := imagefile.NewReader(&config)
-	imagefiles, err := reader.GetImagefiles(info, *inputFilepath)
+	imagefiles, err := reader.GetImagefiles(inputInfo, *inputFilepath)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -53,6 +81,7 @@ func main() {
 		err = soundfile.Wav()
 		if err != nil {
 			fmt.Printf("\n%s writeout was not fully completed: %s", soundfile.Name(), err)
+			continue
 		}
 
 		spectrogram := spectrogram.NewSpectrogram(&config)

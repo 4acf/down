@@ -8,14 +8,9 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
-)
-
-const (
-	WAV_EXTENSION = ".wav"
 )
 
 type Soundfile struct {
@@ -39,7 +34,7 @@ func NewSoundfile(config *config.Config, img *image.Image, name string) Soundfil
 		SampleRate:  sampleRate,
 	}
 
-	name = appendWav(name)
+	name = utils.AppendWav(name)
 
 	return Soundfile{
 		config:      config,
@@ -61,24 +56,8 @@ func (soundfile *Soundfile) Data() []float64 {
 	return soundfile.data
 }
 
-func appendWav(name string) string {
-	name = strings.TrimSpace(name)
-
-	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|", " "}
-	for _, char := range invalidChars {
-		name = strings.ReplaceAll(name, char, "_")
-	}
-
-	if strings.HasSuffix(name, ".") {
-		return name + WAV_EXTENSION
-	} else if !strings.HasSuffix(strings.ToLower(name), WAV_EXTENSION) {
-		return name + WAV_EXTENSION
-	}
-	return name
-}
-
 func (soundfile *Soundfile) Wav() error {
-	outputFilepath := filepath.Join(soundfile.config.OutputDirectory(), soundfile.name)
+	outputFilepath := filepath.Join(soundfile.config.AudioOutputDirectory(), soundfile.name)
 
 	out, err := os.Create(outputFilepath)
 	if err != nil {
