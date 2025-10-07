@@ -18,16 +18,15 @@ func InitializeOutputDirectories(outputDirectory, audioOutputDirectory, spectrog
 		if err != nil {
 			return err
 		}
+	}
+	err = os.MkdirAll(audioOutputDirectory, FILE_PERMISSIONS)
+	if err != nil {
+		return err
+	}
 
-		err = os.MkdirAll(audioOutputDirectory, FILE_PERMISSIONS)
-		if err != nil {
-			return err
-		}
-
-		err = os.MkdirAll(spectrogramOutputDirectory, FILE_PERMISSIONS)
-		if err != nil {
-			return err
-		}
+	err = os.MkdirAll(spectrogramOutputDirectory, FILE_PERMISSIONS)
+	if err != nil {
+		return err
 	}
 	return nil
 }
