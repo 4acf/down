@@ -61,7 +61,7 @@ func (soundfile *Soundfile) Wav() error {
 
 	out, err := os.Create(outputFilepath)
 	if err != nil {
-		return fmt.Errorf("error creating file %s: %w", soundfile.name, err)
+		return err
 	}
 	defer out.Close()
 
