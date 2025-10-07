@@ -80,7 +80,7 @@ func (spectrogram *Spectrogram) Image(samples []float64, bounds image.Rectangle)
 			frequencyBin := utils.ScaleInt(j, yRes, frequencyBins)
 			abs := math.Abs(real(complexValues[frame][frequencyBin]))
 			db := 20 * math.Log10(abs+1e-10)
-			db = utils.Clamp(db, minDb, 0)
+			db = utils.ClampFloat64(db, minDb, 0)
 			result[i][j] = (db + (minDb * -1)) / (minDb * -1)
 		}
 		if spectrogram.config.ProgressEnabled() {

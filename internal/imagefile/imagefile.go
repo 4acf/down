@@ -3,6 +3,7 @@ package imagefile
 import (
 	"down/config"
 	"down/internal/filesystem"
+	"down/internal/spectrogram"
 	"down/internal/utils"
 	"errors"
 	"image"
@@ -57,11 +58,15 @@ func (imagefile *Imagefile) Write(data [][]float64) error {
 		image.Rect(0, 0, xRes, yRes),
 	)
 
+	paletteLength := len(spectrogram.PALETTE) / 3
 	for i := range xRes {
 		for j := range yRes {
-			channelValue := uint8(data[i][j] * 0xff)
+			colorIndex := int(data[i][j] * float64(paletteLength-1))
 			color := color.NRGBA{
-				R: channelValue, G: channelValue, B: channelValue, A: 0xff,
+				R: spectrogram.PALETTE[colorIndex*3],
+				G: spectrogram.PALETTE[(colorIndex*3)+1],
+				B: spectrogram.PALETTE[(colorIndex*3)+2],
+				A: 0xff,
 			}
 			newImage.SetNRGBA(i, yRes-j, color)
 		}
