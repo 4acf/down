@@ -146,8 +146,6 @@ func (soundfile *Soundfile) addSine(encoder *wav.Encoder, freqs []float64) {
 		intBuf.Data[i] = int(sample * maxAmplitude)
 	}
 
-	// todo: only run one of these blocks depending on if config is to keep audio files or not
-	// and determine if its really necessary to go from []float64 to []int and then back to []float64
 	_ = encoder.Write(intBuf)
 
 	normalizeValue := math.Pow(2, float64(soundfile.bitDepth)-1)
