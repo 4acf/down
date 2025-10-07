@@ -8,27 +8,32 @@ import (
 )
 
 const (
-	FILE_PERMISSIONS = 0755
+	AUDIO_OUTPUT_DIR       = "audio"
+	SPECTROGRAM_OUTPUT_DIR = "spectrogram"
+	FILE_PERMISSIONS       = 0755
 )
 
-func InitializeOutputDirectories(outputDirectory, audioOutputDirectory, spectrogramOutputDirectory string) error {
+func InitializeOutputDirectories(outputDirectory string) (string, string, error) {
+	audioOutputDirectory := filepath.Join(outputDirectory, AUDIO_OUTPUT_DIR)
+	spectrogramOutputDirectory := filepath.Join(outputDirectory, SPECTROGRAM_OUTPUT_DIR)
+
 	_, err := os.Stat(outputDirectory)
 	if errors.Is(err, os.ErrNotExist) {
 		err = os.MkdirAll(outputDirectory, FILE_PERMISSIONS)
 		if err != nil {
-			return err
+			return "", "", err
 		}
 	}
 	err = os.MkdirAll(audioOutputDirectory, FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
 	err = os.MkdirAll(spectrogramOutputDirectory, FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return "", "", err
 	}
-	return nil
+	return audioOutputDirectory, spectrogramOutputDirectory, nil
 }
 
 func CreateFinalPath(parent, internal, filename string) (string, error) {

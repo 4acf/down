@@ -10,12 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
-)
-
-const (
-	AUDIO_OUTPUT_DIR       = "audio"
-	SPECTROGRAM_OUTPUT_DIR = "spectrogram"
 )
 
 func main() {
@@ -37,10 +31,7 @@ func main() {
 		return
 	}
 
-	audioOutputDirectory := filepath.Join(*outputDirectory, AUDIO_OUTPUT_DIR)
-	spectrogramOutputDirectory := filepath.Join(*outputDirectory, SPECTROGRAM_OUTPUT_DIR)
-
-	err = filesystem.InitializeOutputDirectories(*outputDirectory, audioOutputDirectory, spectrogramOutputDirectory)
+	audioOutputDirectory, spectrogramOutputDirectory, err := filesystem.InitializeOutputDirectories(*outputDirectory)
 	if err != nil {
 		fmt.Printf("[could not initialize output directories] %s", err)
 		return
