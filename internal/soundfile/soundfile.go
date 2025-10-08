@@ -35,8 +35,6 @@ func NewSoundfile(config *config.Config, imageContents *image.Image, imagefile *
 		SampleRate:  sampleRate,
 	}
 
-	//name := utils.AppendWav(imagefile.Name())
-
 	return Soundfile{
 		config:        config,
 		imageContents: imageContents,
